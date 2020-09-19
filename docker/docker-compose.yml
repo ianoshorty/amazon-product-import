@@ -1,0 +1,59 @@
+version: '3.6'
+
+services:
+  app:
+    image: wordpress:5.5-fpm-alpine
+    container_name: app
+    volumes:
+      - wordpress:/var/www/html
+      - ../src/plugins:/var/www/html/wp-content/plugins
+    ports: 
+      - "9000:9000"
+    environment: 
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: testuser
+      WORDPRESS_DB_PASSWORD: testpass
+      WORDPRESS_DB_NAME: testdb
+      WORDPRESS_AUTH_KEY: 1+AbeAQ+@&GR`t:Ba3=X1UqoUmUh#^-U]>+QeXT45wSwa:<hIZ{,L/nI[E81.AQr
+      WORDPRESS_SECURE_AUTH_KEY: S!T-]uo$h|lFb0+5;{0P]I|mZo!np2D-|}%:I#;/!zXblYNS5#0,2.wm7!?)H2#-
+      WORDPRESS_LOGGED_IN_KEY: kRy-MfSJLw5g*en#P^M&)YTmPPt!KsUlB![TE*oWfE/-Q|SN5t!|C-WZ!KA%XM+u
+      WORDPRESS_NONCE_KEY: o:yH3sC|QS4Os~-loPs:r@,,qSZxl?U abD|G_+k^7|cVk 0f-!FT2+|,PN`utb=
+      WORDPRESS_AUTH_SALT: uH&LB%ah@~u9=lN_>kc~Z1!!(6<MU^xxn+D d+o7vIc;J>isE3W 7>r<k4rIPcLc
+      WORDPRESS_SECURE_AUTH_SALT: (aJ~*cK75l=,,(uQf0-A~O:ckPjC cVh/,D5joYB9D#p{|~aqMbe/t)o+gG +h3o
+      WORDPRESS_LOGGED_IN_SALT: H~|n)h8am;0OR,oTePreRy<v9<Oz<+7fg:PWGiOJ4hn)fu- Pn-y*+rV-/~/1ab@
+      WORDPRESS_NONCE_SALT: Y8VPTSScAfEk!C(I&(DSA`6g}_dC8U6o4i4ydVYJq-?]LNrU@B@|&.N)j-/U.<NV
+      WORDPRESS_DEBUG: 1
+    depends_on:
+      - "db"
+
+  web:
+    image: nginx:alpine
+    container_name: web
+    depends_on:
+      - "db"
+      - "app"
+    links:
+      - "app"
+    ports:
+      - "80:80"
+    volumes:
+      - wordpress:/var/www/html 
+      - ./nginx/app.conf:/etc/nginx/nginx.conf
+
+  db:
+    image: mysql:5.7.22
+    container_name: db
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_USER: testuser
+      MYSQL_PASSWORD: testpass
+      MYSQL_DATABASE: testdb
+      MYSQL_RANDOM_ROOT_PASSWORD: 1
+    volumes:
+      - dbdata:/var/lib/mysql
+
+volumes:
+  dbdata:
+    driver: local
+  wordpress: 
