@@ -61,7 +61,6 @@ class Plugin_Name_Admin {
 
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
-
 	}
 
 	/**
@@ -84,7 +83,6 @@ class Plugin_Name_Admin {
 		 */
 
 		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/plugin-name-admin.css', array(), $this->version, 'all' );
-
 	}
 
 	/**
@@ -110,16 +108,104 @@ class Plugin_Name_Admin {
 
 	}
 
-	public function import_isbn() {
-
-		// Todo: 
-		// $this->searchItems();
+	public function register_import_settings_page() {
+		add_menu_page(
+			__( 'Amazon Product Import', 'textdomain' ),
+			'Amazon Product Import',
+			'manage_options',
+			__DIR__ . '/partials/plugin-name-admin-display.php',
+			'',
+			'dashicons-download',
+			6
+		);
 	}
 
+	public function import_products() {
 
-	public function searchItems() {
+		if ( ! check_admin_referer( 'amazon_product_import') ) {
+			wp_die( 
+				__( 'Invalid nonce specified', $this->plugin_name ), 
+				__( 'Error', $this->plugin_name ), 
+				[
+					'response' 	=> 403,
+					'back_link' => 'admin.php?page=' . $this->plugin_name,
+				]
+			);
+			exit;
+		}
+
+		$products = $this->collect_product_identifiers();
+
+		if ( !empty($products) ) {
+			$updates = $this->fetch_items($products);
+
+			if ( !empty($updates) ) {
+				$this->update_items($updates);
+			}
+		}
+		
+		wp_redirect( admin_url( 'admin.php?page=asianbooklistimport%2Fadmin%2Fpartials%2Fplugin-name-admin-display.php&success=true' ) );
+        exit;
+	}
+
+	protected function collect_product_identifiers() {
+
+		// Get all the products stored as Events in tribe
+		// with their associated identifiers (ISBN etc)
+
+		$args = [
+			'post_type'=> 'tribe_events',
+			'post_status' => 'publish',
+			'posts_per_page' => -1,
+			'order'    => 'ASC',
+			'fields'	=> 'ids'
+		];              
+
+		$posts = get_posts( $args );
+		$product_ids = [];
+		
+		foreach ( $posts as $post ) {
+			$id = get_post_meta($post, 'amazon_identifier', true);
+
+			if ( !empty($id) ) {
+				$product_ids[$id] = $post;
+			}
+		}
+		
+		return $product_ids;
+	}
+
+	public function update_items($updates = []) {
+		foreach ($updates as $update) {
+
+			// Update all the relevant post meta
+			
+			// print_r($update);
+			// die();
+
+			// Update the title
+			wp_update_post( [
+				'ID' => $update['post'],
+				'post_title' => $update['title'],
+			] );
+
+			// Update the author
+			// Organizer is the author
+			// Organizer needs an ID
+
+			// Update the release date
+			$format = 'Y-m-d\TH:i:s\Z';
+			$release_date = DateTime::createFromFormat($format, $update['release']);
+
+			update_post_meta($update['post'], '_EventStartDate', $release_date->format('Y-m-d H:i:s'));
+			update_post_meta($update['post'], '_EventEndDate', $release_date->format('Y-m-d H:i:s'));
+			update_post_meta($update['post'], '_EventStartDateUTC', $release_date->format('Y-m-d H:i:s'));
+			update_post_meta($update['post'], '_EventEndDateUTC', $release_date->format('Y-m-d H:i:s'));
+		}
+	}
+
+	public function fetch_items($products = []) {
 		$config = new Configuration();
-
 		$access_key_id = $_ENV['AWS_ACCESS_KEY_ID'];
 		$secret_access_key = $_ENV['AWS_SECRET_ACCESS_KEY'];
 		$tracking_id = $_ENV['AWS_TRACKING_ID'];
@@ -155,8 +241,9 @@ class Plugin_Name_Admin {
 		# Request initialization
 
 		# Specify keywords
-		$keyword = '1911622463';
-
+		//$keyword = '1911622463';
+		
+		$keyword = implode(',', array_keys($products)); 
 		/*
 		* Specify the category in which search request is to be made
 		* For more details, refer:
@@ -165,7 +252,7 @@ class Plugin_Name_Admin {
 		$searchIndex = "All";
 
 		# Specify item count to be returned in search result
-		$itemCount = 1;
+		$itemCount = count($products);
 
 		/*
 		* Choose resources you want from SearchItemsResource enum
@@ -179,9 +266,7 @@ class Plugin_Name_Admin {
 			SearchItemsResource::ITEM_INFOTECHNICAL_INFO,
 			SearchItemsResource::ITEM_INFOCONTENT_INFO,
 			SearchItemsResource::ITEM_INFOFEATURES,
-			SearchItemsResource::IMAGESPRIMARYMEDIUM,
-			SearchItemsResource::OFFERSLISTINGSMERCHANT_INFO,
-			SearchItemsResource::OFFERSLISTINGSPRICE];
+			SearchItemsResource::IMAGESPRIMARYMEDIUM,];
 
 		# Forming the request
 		$searchItemsRequest = new SearchItemsRequest();
@@ -203,68 +288,82 @@ class Plugin_Name_Admin {
 			return;
 		}
 
-		echo '<pre>';
+		$updates = [];
 
 		# Sending the request
 		try {
 			$searchItemsResponse = $apiInstance->searchItems($searchItemsRequest);
 
-			echo 'API called successfully', PHP_EOL;
-			echo 'Complete Response: ', $searchItemsResponse, PHP_EOL;
-
 			# Parsing the response
 			if ($searchItemsResponse->getSearchResult() !== null) {
-				echo 'Printing first item information in SearchResult:', PHP_EOL;
-				$item = $searchItemsResponse->getSearchResult()->getItems()[0];
-				if ($item !== null) {
-					if ($item->getASIN() !== null) {
-						echo "ISBN: ", $item->getASIN(), PHP_EOL;
-					}
-					if ($item->getDetailPageURL() !== null) {
-						echo "DetailPageURL: ", $item->getDetailPageURL(), PHP_EOL;
-					}
-					if ($item->getItemInfo() !== null
-						and $item->getItemInfo()->getTitle() !== null
-						and $item->getItemInfo()->getTitle()->getDisplayValue() !== null) {
-						echo "Title: ", $item->getItemInfo()->getTitle()->getDisplayValue(), PHP_EOL;
-					}
-					if ($item->getItemInfo() !== null && 
-						$item->getItemInfo()->getByLineInfo() !== null &&
-						$item->getItemInfo()->getByLineInfo()->getContributors() !== null) {
+				foreach ($searchItemsResponse->getSearchResult()->getItems() as $item) {
+					if ($item !== null) {
+						
+						if ($item->getASIN() === null) {
+							// Without an ASIN we can't update
+							continue;
+						}
 
-						$contributors = $item->getItemInfo()->getByLineInfo()->getContributors();
+						//echo "ISBN: ", $item->getASIN(), PHP_EOL;
+						$asin = $item->getASIN();
+						$updates[$asin]['ASIN'] = $asin;
+						$updates[$asin]['post'] = $products[$asin];
 
-						foreach ($contributors as $contributor) {
-							if ($contributor->getRoleType() === 'author') {
-								echo "Author: ", $contributor->getName(), PHP_EOL;
+						if ($item->getDetailPageURL() !== null) {
+							// echo "DetailPageURL: ", $item->getDetailPageURL(), PHP_EOL;
+							$updates[$asin]['detail'] = $item->getDetailPageURL();
+						}
+
+						if ($item->getItemInfo() !== null
+							&& $item->getItemInfo()->getTitle() !== null
+							&& $item->getItemInfo()->getTitle()->getDisplayValue() !== null) {
+							// echo "Title: ", $item->getItemInfo()->getTitle()->getDisplayValue(), PHP_EOL;
+
+							$updates[$asin]['title'] = $item->getItemInfo()->getTitle()->getDisplayValue();
+						}
+
+						if ($item->getItemInfo() !== null && 
+							$item->getItemInfo()->getByLineInfo() !== null &&
+							$item->getItemInfo()->getByLineInfo()->getContributors() !== null) {
+
+							$contributors = $item->getItemInfo()->getByLineInfo()->getContributors();
+
+							foreach ($contributors as $contributor) {
+								if ($contributor->getRoleType() === 'author') {
+									//echo "Author: ", $contributor->getName(), PHP_EOL;
+
+									$updates[$asin]['author'][] = $contributor->getName();
+								}
 							}
 						}
-					}
-					if ($item->getImages() !== null && 
-						$item->getImages()->getPrimary() !== null &&
-						$item->getImages()->getPrimary()->getMedium() !== null) {
-							echo "Image URL: " . $item->getImages()->getPrimary()->getMedium()->getURL() . PHP_EOL;
-					}
-					if ($item->getItemInfo()->getProductInfo() !== null && 
-						$item->getItemInfo()->getProductInfo()->getReleaseDate() !== null &&
-						$item->getItemInfo()->getProductInfo()->getReleaseDate()->getLabel() !== null) {
-							echo "Release Date: " . $item->getItemInfo()->getProductInfo()->getReleaseDate()->getDisplayValue() . PHP_EOL;
-					}
-					if ($item->getOffers() !== null
-						and $item->getOffers() !== null
-						and $item->getOffers()->getListings() !== null
-						and $item->getOffers()->getListings()[0]->getPrice() !== null
-						and $item->getOffers()->getListings()[0]->getPrice()->getDisplayAmount() !== null) {
-						echo "Buying price: ", $item->getOffers()->getListings()[0]->getPrice()
-							->getDisplayAmount(), PHP_EOL;
+
+						if ($item->getImages() !== null && 
+							$item->getImages()->getPrimary() !== null &&
+							$item->getImages()->getPrimary()->getMedium() !== null) {
+								// echo "Image URL: " . $item->getImages()->getPrimary()->getMedium()->getURL() . PHP_EOL;
+
+							$updates[$asin]['image'] = $item->getImages()->getPrimary()->getMedium()->getURL();	
+						}
+
+						if ($item->getItemInfo()->getProductInfo() !== null && 
+							$item->getItemInfo()->getProductInfo()->getReleaseDate() !== null &&
+							$item->getItemInfo()->getProductInfo()->getReleaseDate()->getLabel() !== null) {
+								// echo "Release Date: " . $item->getItemInfo()->getProductInfo()->getReleaseDate()->getDisplayValue() . PHP_EOL;
+								
+							$updates[$asin]['release'] = $item->getItemInfo()->getProductInfo()->getReleaseDate()->getDisplayValue();	
+						}
 					}
 				}
 			}
+
 			if ($searchItemsResponse->getErrors() !== null) {
 				echo PHP_EOL, 'Printing Errors:', PHP_EOL, 'Printing first error object from list of errors', PHP_EOL;
 				echo 'Error code: ', $searchItemsResponse->getErrors()[0]->getCode(), PHP_EOL;
 				echo 'Error message: ', $searchItemsResponse->getErrors()[0]->getMessage(), PHP_EOL;
 			}
+
+			return $updates;
+
 		} catch (ApiException $exception) {
 			echo "Error calling PA-API 5.0!", PHP_EOL;
 			echo "HTTP Status Code: ", $exception->getCode(), PHP_EOL;
@@ -281,7 +380,5 @@ class Plugin_Name_Admin {
 		} catch (Exception $exception) {
 			echo "Error Message: ", $exception->getMessage(), PHP_EOL;
 		}
-
-		echo '</pre>';
 	}
 }
