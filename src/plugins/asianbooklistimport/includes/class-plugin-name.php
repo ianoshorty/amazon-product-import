@@ -1,5 +1,7 @@
 <?php
 
+require_once(__DIR__ .'/../vendor/autoload.php'); 
+
 /**
  * The file that defines the core plugin class
  *
@@ -74,11 +76,16 @@ class Plugin_Name {
 		}
 		$this->plugin_name = 'plugin-name';
 
+		$this->load_credentials();
 		$this->load_dependencies();
 		$this->set_locale();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
+	}
 
+	public function load_credentials() {
+		$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
+		$dotenv->load();
 	}
 
 	/**

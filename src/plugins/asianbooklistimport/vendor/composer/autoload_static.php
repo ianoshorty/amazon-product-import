@@ -63,6 +63,7 @@ class ComposerStaticInitd5146ae522d26e7d63537b6ba8158185
             'Psr\\EventDispatcher\\' => 20,
             'Psr\\Container\\' => 14,
             'Prophecy\\' => 9,
+            'PhpOption\\' => 10,
             'PhpCsFixer\\' => 11,
         ),
         'G' => 
@@ -70,9 +71,11 @@ class ComposerStaticInitd5146ae522d26e7d63537b6ba8158185
             'GuzzleHttp\\Psr7\\' => 16,
             'GuzzleHttp\\Promise\\' => 19,
             'GuzzleHttp\\' => 11,
+            'GrahamCampbell\\ResultType\\' => 26,
         ),
         'D' => 
         array (
+            'Dotenv\\' => 7,
             'Doctrine\\Instantiator\\' => 22,
             'Doctrine\\Common\\Lexer\\' => 22,
             'Doctrine\\Common\\Annotations\\' => 28,
@@ -199,6 +202,10 @@ class ComposerStaticInitd5146ae522d26e7d63537b6ba8158185
         array (
             0 => __DIR__ . '/..' . '/phpspec/prophecy/src/Prophecy',
         ),
+        'PhpOption\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/phpoption/phpoption/src/PhpOption',
+        ),
         'PhpCsFixer\\' => 
         array (
             0 => __DIR__ . '/..' . '/friendsofphp/php-cs-fixer/src',
@@ -214,6 +221,14 @@ class ComposerStaticInitd5146ae522d26e7d63537b6ba8158185
         'GuzzleHttp\\' => 
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/guzzle/src',
+        ),
+        'GrahamCampbell\\ResultType\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/graham-campbell/result-type/src',
+        ),
+        'Dotenv\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/vlucas/phpdotenv/src',
         ),
         'Doctrine\\Instantiator\\' => 
         array (

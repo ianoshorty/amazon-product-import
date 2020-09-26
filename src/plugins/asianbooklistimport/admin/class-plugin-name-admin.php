@@ -120,24 +120,28 @@ class Plugin_Name_Admin {
 	public function searchItems() {
 		$config = new Configuration();
 
+		$access_key_id = $_ENV['AWS_ACCESS_KEY_ID'];
+		$secret_access_key = $_ENV['AWS_SECRET_ACCESS_KEY'];
+		$tracking_id = $_ENV['AWS_TRACKING_ID'];
+
 		/*
 		* Add your credentials
 		*/
 		# Please add your access key here
-		$config->setAccessKey('<YOUR ACCESS KEY>');
+		$config->setAccessKey($access_key_id);
 		# Please add your secret key here
-		$config->setSecretKey('<YOUR SECRET KEY>');
+		$config->setSecretKey($secret_access_key);
 
 		# Please add your partner tag (store/tracking id) here
-		$partnerTag = '<YOUR PARTNER TAG>';
+		$partnerTag = $tracking_id;
 
 		/*
 		* PAAPI host and region to which you want to send request
 		* For more details refer:
 		* https://webservices.amazon.com/paapi5/documentation/common-request-parameters.html#host-and-region
 		*/
-		$config->setHost('webservices.amazon.com');
-		$config->setRegion('us-east-1');
+		$config->setHost('webservices.amazon.co.uk');
+		$config->setRegion('eu-west-1');
 
 		$apiInstance = new DefaultApi(
 			/*
@@ -151,7 +155,7 @@ class Plugin_Name_Admin {
 		# Request initialization
 
 		# Specify keywords
-		$keyword = 'Harry Potter';
+		$keyword = '1911622463';
 
 		/*
 		* Specify the category in which search request is to be made
@@ -170,6 +174,13 @@ class Plugin_Name_Admin {
 		*/
 		$resources = [
 			SearchItemsResource::ITEM_INFOTITLE,
+			SearchItemsResource::ITEM_INFOPRODUCT_INFO,
+			SearchItemsResource::ITEM_INFOBY_LINE_INFO,
+			SearchItemsResource::ITEM_INFOTECHNICAL_INFO,
+			SearchItemsResource::ITEM_INFOCONTENT_INFO,
+			SearchItemsResource::ITEM_INFOFEATURES,
+			SearchItemsResource::IMAGESPRIMARYMEDIUM,
+			SearchItemsResource::OFFERSLISTINGSMERCHANT_INFO,
 			SearchItemsResource::OFFERSLISTINGSPRICE];
 
 		# Forming the request
@@ -192,6 +203,8 @@ class Plugin_Name_Admin {
 			return;
 		}
 
+		echo '<pre>';
+
 		# Sending the request
 		try {
 			$searchItemsResponse = $apiInstance->searchItems($searchItemsRequest);
@@ -205,7 +218,7 @@ class Plugin_Name_Admin {
 				$item = $searchItemsResponse->getSearchResult()->getItems()[0];
 				if ($item !== null) {
 					if ($item->getASIN() !== null) {
-						echo "ASIN: ", $item->getASIN(), PHP_EOL;
+						echo "ISBN: ", $item->getASIN(), PHP_EOL;
 					}
 					if ($item->getDetailPageURL() !== null) {
 						echo "DetailPageURL: ", $item->getDetailPageURL(), PHP_EOL;
@@ -214,6 +227,28 @@ class Plugin_Name_Admin {
 						and $item->getItemInfo()->getTitle() !== null
 						and $item->getItemInfo()->getTitle()->getDisplayValue() !== null) {
 						echo "Title: ", $item->getItemInfo()->getTitle()->getDisplayValue(), PHP_EOL;
+					}
+					if ($item->getItemInfo() !== null && 
+						$item->getItemInfo()->getByLineInfo() !== null &&
+						$item->getItemInfo()->getByLineInfo()->getContributors() !== null) {
+
+						$contributors = $item->getItemInfo()->getByLineInfo()->getContributors();
+
+						foreach ($contributors as $contributor) {
+							if ($contributor->getRoleType() === 'author') {
+								echo "Author: ", $contributor->getName(), PHP_EOL;
+							}
+						}
+					}
+					if ($item->getImages() !== null && 
+						$item->getImages()->getPrimary() !== null &&
+						$item->getImages()->getPrimary()->getMedium() !== null) {
+							echo "Image URL: " . $item->getImages()->getPrimary()->getMedium()->getURL() . PHP_EOL;
+					}
+					if ($item->getItemInfo()->getProductInfo() !== null && 
+						$item->getItemInfo()->getProductInfo()->getReleaseDate() !== null &&
+						$item->getItemInfo()->getProductInfo()->getReleaseDate()->getLabel() !== null) {
+							echo "Release Date: " . $item->getItemInfo()->getProductInfo()->getReleaseDate()->getDisplayValue() . PHP_EOL;
 					}
 					if ($item->getOffers() !== null
 						and $item->getOffers() !== null
@@ -246,5 +281,7 @@ class Plugin_Name_Admin {
 		} catch (Exception $exception) {
 			echo "Error Message: ", $exception->getMessage(), PHP_EOL;
 		}
+
+		echo '</pre>';
 	}
 }
