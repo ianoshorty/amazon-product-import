@@ -113,7 +113,7 @@ class Plugin_Name_Admin {
 	public function import_isbn() {
 
 		// Todo: 
-		$this->searchItems();
+		// $this->searchItems();
 	}
 
 
