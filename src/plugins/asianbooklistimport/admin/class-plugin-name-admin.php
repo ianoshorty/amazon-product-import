@@ -5,7 +5,9 @@ use Amazon\ProductAdvertisingAPI\v1\com\amazon\paapi5\v1\api\DefaultApi;
 use Amazon\ProductAdvertisingAPI\v1\com\amazon\paapi5\v1\PartnerType;
 use Amazon\ProductAdvertisingAPI\v1\com\amazon\paapi5\v1\ProductAdvertisingAPIClientException;
 use Amazon\ProductAdvertisingAPI\v1\com\amazon\paapi5\v1\SearchItemsRequest;
+use Amazon\ProductAdvertisingAPI\v1\com\amazon\paapi5\v1\GetItemsRequest;
 use Amazon\ProductAdvertisingAPI\v1\com\amazon\paapi5\v1\SearchItemsResource;
+use Amazon\ProductAdvertisingAPI\v1\com\amazon\paapi5\v1\GetItemsResource;
 use Amazon\ProductAdvertisingAPI\v1\Configuration;
 
 require_once(__DIR__ .'../../vendor/autoload.php'); 
@@ -120,6 +122,54 @@ class Plugin_Name_Admin {
 		);
 	}
 
+	public function amazon_identifier_add_meta_box() {
+		add_meta_box(
+			'amazon-identifier-post-class',      // Unique ID
+			esc_html__( 'Amazon Identifier', 'amazon_identifier' ),    // Title
+			array( $this, 'amazon_identifier_meta_box' ),   // Callback function
+			'tribe_events',         // Admin page (or post type)
+			'side',         // Context
+			'default'       // Priority
+		);
+	}
+
+	public function amazon_identifier_save_post_meta( $post_id, $post ) {
+
+		/* Verify the nonce before proceeding. */
+		if ( !isset( $_POST['amazon_identifier_post_nonce'] ) ||
+		 	 !wp_verify_nonce( $_POST['amazon_identifier_post_nonce'], 'amazon_identifier_nonce_file' ) ) {
+			return $post_id;
+		}
+
+		/* Get the posted data and sanitize it for use as an HTML class. */
+		$new_meta_value = ( isset( $_POST['amazon_identifier'] ) ? trim(sanitize_html_class( $_POST['amazon_identifier'] )) : '' );
+
+		/* Get the meta key. */
+		$meta_key = 'amazon_identifier';
+
+		/* Get the meta value of the custom field key. */
+		$meta_value = get_post_meta( $post_id, $meta_key, true );
+
+		/* If a new meta value was added and there was no previous value, add it. */
+		if ( !empty( $new_meta_value ) && empty( $meta_value ) ) {
+			add_post_meta( $post_id, $meta_key, $new_meta_value, true );
+		}
+
+		/* If the new meta value does not match the old value, update it. */
+		elseif ( $new_meta_value && $new_meta_value != $meta_value ) {
+			update_post_meta( $post_id, $meta_key, $new_meta_value );
+		}
+
+		/* If there is no new meta value but an old value exists, delete it. */
+		elseif ( empty( $new_meta_value ) && !empty( $meta_value ) ) {
+			delete_post_meta( $post_id, $meta_key, $meta_value );
+		}
+	}
+
+	public function amazon_identifier_meta_box() {
+		require __DIR__ . '/partials/plugin-name-amazon-identifier-meta-box.php';
+	}
+
 	public function import_products() {
 
 		if ( ! check_admin_referer( 'amazon_product_import') ) {
@@ -152,13 +202,19 @@ class Plugin_Name_Admin {
 
 		// Get all the products stored as Events in tribe
 		// with their associated identifiers (ISBN etc)
-
 		$args = [
 			'post_type'=> 'tribe_events',
 			'post_status' => 'publish',
 			'posts_per_page' => -1,
 			'order'    => 'ASC',
-			'fields'	=> 'ids'
+			'fields'	=> 'ids',
+			'meta_query' => [
+				[ 
+					'key' => '_EventStartDate',
+					'value' => (new DateTime())->format('Y-m-d H:i:s'),
+					'compare' => '>=',
+				],
+			]
 		];              
 
 		$posts = get_posts( $args );
@@ -171,7 +227,7 @@ class Plugin_Name_Admin {
 				$product_ids[$id] = $post;
 			}
 		}
-		
+
 		return $product_ids;
 	}
 
@@ -192,6 +248,9 @@ class Plugin_Name_Admin {
 			// Update the author
 			// Organizer is the author
 			// Organizer needs an ID
+
+			// Save the product image
+			// $this->attach_post_image();
 
 			// Update the release date
 			$format = 'Y-m-d\TH:i:s\Z';
@@ -240,145 +299,139 @@ class Plugin_Name_Admin {
 
 		# Request initialization
 
-		# Specify keywords
-		//$keyword = '1911622463';
-		
-		$keyword = implode(',', array_keys($products)); 
 		/*
-		* Specify the category in which search request is to be made
-		* For more details, refer:
-		* https://webservices.amazon.com/paapi5/documentation/use-cases/organization-of-items-on-amazon/search-index.html
-		*/
-		$searchIndex = "All";
-
-		# Specify item count to be returned in search result
-		$itemCount = count($products);
-
-		/*
-		* Choose resources you want from SearchItemsResource enum
+		* Choose resources you want from GetItemsResource enum
 		* For more details,
 		* refer: https://webservices.amazon.com/paapi5/documentation/search-items.html#resources-parameter
 		*/
 		$resources = [
-			SearchItemsResource::ITEM_INFOTITLE,
-			SearchItemsResource::ITEM_INFOPRODUCT_INFO,
-			SearchItemsResource::ITEM_INFOBY_LINE_INFO,
-			SearchItemsResource::ITEM_INFOTECHNICAL_INFO,
-			SearchItemsResource::ITEM_INFOCONTENT_INFO,
-			SearchItemsResource::ITEM_INFOFEATURES,
-			SearchItemsResource::IMAGESPRIMARYMEDIUM,];
+			GetItemsResource::ITEM_INFOTITLE,
+			GetItemsResource::ITEM_INFOPRODUCT_INFO,
+			GetItemsResource::ITEM_INFOBY_LINE_INFO,
+			GetItemsResource::ITEM_INFOTECHNICAL_INFO,
+			GetItemsResource::ITEM_INFOCONTENT_INFO,
+			GetItemsResource::ITEM_INFOFEATURES,
+			GetItemsResource::IMAGESPRIMARYMEDIUM
+		];
 
-		# Forming the request
-		$searchItemsRequest = new SearchItemsRequest();
-		$searchItemsRequest->setSearchIndex($searchIndex);
-		$searchItemsRequest->setKeywords($keyword);
-		$searchItemsRequest->setItemCount($itemCount);
-		$searchItemsRequest->setPartnerTag($partnerTag);
-		$searchItemsRequest->setPartnerType(PartnerType::ASSOCIATES);
-		$searchItemsRequest->setResources($resources);
+		$product_ids = array_map(function($value) {
+			return (string) $value;
+		}, array_keys($products));
 
-		# Validating request
-		$invalidPropertyList = $searchItemsRequest->listInvalidProperties();
-		$length = count($invalidPropertyList);
-		if ($length > 0) {
-			echo "Error forming the request", PHP_EOL;
-			foreach ($invalidPropertyList as $invalidProperty) {
-				echo $invalidProperty, PHP_EOL;
-			}
-			return;
-		}
-
+		// Batch into groups of 10
 		$updates = [];
 
-		# Sending the request
-		try {
-			$searchItemsResponse = $apiInstance->searchItems($searchItemsRequest);
+		$product_ids_batched = array_chunk( $product_ids, 10 );
+		
+		for ($i = 0; $i < count($product_ids_batched); $i++) {
+			# Forming the request
+			$searchItemsRequest = new GetItemsRequest();
+			$searchItemsRequest->setItemIds($product_ids_batched[$i]);
+			$searchItemsRequest->setPartnerTag($partnerTag);
+			$searchItemsRequest->setPartnerType(PartnerType::ASSOCIATES);
+			$searchItemsRequest->setResources($resources);
 
-			# Parsing the response
-			if ($searchItemsResponse->getSearchResult() !== null) {
-				foreach ($searchItemsResponse->getSearchResult()->getItems() as $item) {
-					if ($item !== null) {
-						
-						if ($item->getASIN() === null) {
-							// Without an ASIN we can't update
-							continue;
-						}
+			# Validating request
+			$invalidPropertyList = $searchItemsRequest->listInvalidProperties();
+			$length = count($invalidPropertyList);
+			if ($length > 0) {
+				echo "Error forming the request", PHP_EOL;
+				foreach ($invalidPropertyList as $invalidProperty) {
+					echo $invalidProperty, PHP_EOL;
+				}
+				return;
+			}
 
-						//echo "ISBN: ", $item->getASIN(), PHP_EOL;
-						$asin = $item->getASIN();
-						$updates[$asin]['ASIN'] = $asin;
-						$updates[$asin]['post'] = $products[$asin];
+			# Sending the request
+			try {
+				$searchItemsResponse = $apiInstance->getItems($searchItemsRequest);
 
-						if ($item->getDetailPageURL() !== null) {
-							// echo "DetailPageURL: ", $item->getDetailPageURL(), PHP_EOL;
-							$updates[$asin]['detail'] = $item->getDetailPageURL();
-						}
+				# Parsing the response
+				if ($searchItemsResponse->getItemsResult() !== null) {
+					foreach ($searchItemsResponse->getItemsResult()->getItems() as $item) {
+						if ($item !== null) {
+							
+							if ($item->getASIN() === null) {
+								// Without an ASIN we can't update
+								continue;
+							}
 
-						if ($item->getItemInfo() !== null
-							&& $item->getItemInfo()->getTitle() !== null
-							&& $item->getItemInfo()->getTitle()->getDisplayValue() !== null) {
-							// echo "Title: ", $item->getItemInfo()->getTitle()->getDisplayValue(), PHP_EOL;
+							//echo "ISBN: ", $item->getASIN(), PHP_EOL;
+							$asin = $item->getASIN();
+							$updates[$asin]['ASIN'] = $asin;
+							$updates[$asin]['post'] = $products[$asin];
 
-							$updates[$asin]['title'] = $item->getItemInfo()->getTitle()->getDisplayValue();
-						}
+							if ($item->getDetailPageURL() !== null) {
+								// echo "DetailPageURL: ", $item->getDetailPageURL(), PHP_EOL;
+								$updates[$asin]['detail'] = $item->getDetailPageURL();
+							}
 
-						if ($item->getItemInfo() !== null && 
-							$item->getItemInfo()->getByLineInfo() !== null &&
-							$item->getItemInfo()->getByLineInfo()->getContributors() !== null) {
+							if ($item->getItemInfo() !== null
+								&& $item->getItemInfo()->getTitle() !== null
+								&& $item->getItemInfo()->getTitle()->getDisplayValue() !== null) {
+								// echo "Title: ", $item->getItemInfo()->getTitle()->getDisplayValue(), PHP_EOL;
 
-							$contributors = $item->getItemInfo()->getByLineInfo()->getContributors();
+								$updates[$asin]['title'] = $item->getItemInfo()->getTitle()->getDisplayValue();
+							}
 
-							foreach ($contributors as $contributor) {
-								if ($contributor->getRoleType() === 'author') {
-									//echo "Author: ", $contributor->getName(), PHP_EOL;
+							if ($item->getItemInfo() !== null && 
+								$item->getItemInfo()->getByLineInfo() !== null &&
+								$item->getItemInfo()->getByLineInfo()->getContributors() !== null) {
 
-									$updates[$asin]['author'][] = $contributor->getName();
+								$contributors = $item->getItemInfo()->getByLineInfo()->getContributors();
+
+								foreach ($contributors as $contributor) {
+									if ($contributor->getRoleType() === 'author') {
+										//echo "Author: ", $contributor->getName(), PHP_EOL;
+
+										$updates[$asin]['author'][] = $contributor->getName();
+									}
 								}
 							}
-						}
 
-						if ($item->getImages() !== null && 
-							$item->getImages()->getPrimary() !== null &&
-							$item->getImages()->getPrimary()->getMedium() !== null) {
-								// echo "Image URL: " . $item->getImages()->getPrimary()->getMedium()->getURL() . PHP_EOL;
+							if ($item->getImages() !== null && 
+								$item->getImages()->getPrimary() !== null &&
+								$item->getImages()->getPrimary()->getMedium() !== null) {
+									// echo "Image URL: " . $item->getImages()->getPrimary()->getMedium()->getURL() . PHP_EOL;
 
-							$updates[$asin]['image'] = $item->getImages()->getPrimary()->getMedium()->getURL();	
-						}
+								$updates[$asin]['image'] = $item->getImages()->getPrimary()->getMedium()->getURL();	
+							}
 
-						if ($item->getItemInfo()->getProductInfo() !== null && 
-							$item->getItemInfo()->getProductInfo()->getReleaseDate() !== null &&
-							$item->getItemInfo()->getProductInfo()->getReleaseDate()->getLabel() !== null) {
-								// echo "Release Date: " . $item->getItemInfo()->getProductInfo()->getReleaseDate()->getDisplayValue() . PHP_EOL;
-								
-							$updates[$asin]['release'] = $item->getItemInfo()->getProductInfo()->getReleaseDate()->getDisplayValue();	
+							if ($item->getItemInfo()->getProductInfo() !== null && 
+								$item->getItemInfo()->getProductInfo()->getReleaseDate() !== null &&
+								$item->getItemInfo()->getProductInfo()->getReleaseDate()->getLabel() !== null) {
+									// echo "Release Date: " . $item->getItemInfo()->getProductInfo()->getReleaseDate()->getDisplayValue() . PHP_EOL;
+									
+								$updates[$asin]['release'] = $item->getItemInfo()->getProductInfo()->getReleaseDate()->getDisplayValue();	
+							}
 						}
 					}
 				}
-			}
 
-			if ($searchItemsResponse->getErrors() !== null) {
-				echo PHP_EOL, 'Printing Errors:', PHP_EOL, 'Printing first error object from list of errors', PHP_EOL;
-				echo 'Error code: ', $searchItemsResponse->getErrors()[0]->getCode(), PHP_EOL;
-				echo 'Error message: ', $searchItemsResponse->getErrors()[0]->getMessage(), PHP_EOL;
-			}
-
-			return $updates;
-
-		} catch (ApiException $exception) {
-			echo "Error calling PA-API 5.0!", PHP_EOL;
-			echo "HTTP Status Code: ", $exception->getCode(), PHP_EOL;
-			echo "Error Message: ", $exception->getMessage(), PHP_EOL;
-			if ($exception->getResponseObject() instanceof ProductAdvertisingAPIClientException) {
-				$errors = $exception->getResponseObject()->getErrors();
-				foreach ($errors as $error) {
-					echo "Error Type: ", $error->getCode(), PHP_EOL;
-					echo "Error Message: ", $error->getMessage(), PHP_EOL;
+				if ($searchItemsResponse->getErrors() !== null) {
+					echo PHP_EOL, 'Printing Errors:', PHP_EOL, 'Printing first error object from list of errors', PHP_EOL;
+					echo 'Error code: ', $searchItemsResponse->getErrors()[0]->getCode(), PHP_EOL;
+					echo 'Error message: ', $searchItemsResponse->getErrors()[0]->getMessage(), PHP_EOL;
 				}
-			} else {
-				echo "Error response body: ", $exception->getResponseBody(), PHP_EOL;
+
+			} catch (ApiException $exception) {
+				echo "Error calling PA-API 5.0!", PHP_EOL;
+				echo "HTTP Status Code: ", $exception->getCode(), PHP_EOL;
+				echo "Error Message: ", $exception->getMessage(), PHP_EOL;
+				if ($exception->getResponseObject() instanceof ProductAdvertisingAPIClientException) {
+					$errors = $exception->getResponseObject()->getErrors();
+					foreach ($errors as $error) {
+						echo "Error Type: ", $error->getCode(), PHP_EOL;
+						echo "Error Message: ", $error->getMessage(), PHP_EOL;
+					}
+				} else {
+					echo "Error response body: ", $exception->getResponseBody(), PHP_EOL;
+				}
+			} catch (Exception $exception) {
+				echo "Error Message: ", $exception->getMessage(), PHP_EOL;
 			}
-		} catch (Exception $exception) {
-			echo "Error Message: ", $exception->getMessage(), PHP_EOL;
 		}
+
+		return $updates;
 	}
 }
