@@ -124,12 +124,21 @@ class Plugin_Name_Admin {
 
 	public function amazon_identifier_add_meta_box() {
 		add_meta_box(
-			'amazon-identifier-post-class',      // Unique ID
+			'amazon-identifier-post-class',      						// Unique ID
 			esc_html__( 'Amazon Identifier', 'amazon_identifier' ),    // Title
 			array( $this, 'amazon_identifier_meta_box' ),   // Callback function
-			'tribe_events',         // Admin page (or post type)
-			'side',         // Context
-			'default'       // Priority
+			'tribe_events',         						// Admin page (or post type)
+			'side',         								// Context
+			'default'       								// Priority
+		);
+
+		add_meta_box(
+			'amazon-product-image-url-post-class',      						// Unique ID
+			esc_html__( 'Amazon Product Image URL', 'amazon_product_image_url' ),    // Title
+			array( $this, 'amazon_product_image_url_meta_box' ),   // Callback function
+			'tribe_events',         						// Admin page (or post type)
+			'side',         								// Context
+			'default'       								// Priority
 		);
 	}
 
@@ -168,6 +177,10 @@ class Plugin_Name_Admin {
 
 	public function amazon_identifier_meta_box() {
 		require __DIR__ . '/partials/plugin-name-amazon-identifier-meta-box.php';
+	}
+
+	public function amazon_product_image_url_meta_box() {
+		require __DIR__ . '/partials/plugin-name-amazon-product-image-url-meta-box.php';
 	}
 
 	public function import_products() {
@@ -288,7 +301,7 @@ class Plugin_Name_Admin {
 			}
 			
 			// Save the product image
-			// $this->attach_post_image();
+			update_post_meta($update['post'], 'amazon_product_image_url', $update['image']);
 
 			// Update the release date
 			$format = 'Y-m-d\TH:i:s\Z';
