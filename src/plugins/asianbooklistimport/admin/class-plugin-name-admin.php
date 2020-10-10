@@ -142,7 +142,7 @@ class Plugin_Name_Admin {
 		}
 
 		/* Get the posted data and sanitize it for use as an HTML class. */
-		$new_meta_value = ( isset( $_POST['amazon_identifier'] ) ? trim(sanitize_html_class( $_POST['amazon_identifier'] )) : '' );
+		$new_meta_value = ( isset( $_POST['amazon_identifier'] ) ? trim( sanitize_html_class( $_POST['amazon_identifier'] )) : '' );
 
 		/* Get the meta key. */
 		$meta_key = 'amazon_identifier';
@@ -236,9 +236,6 @@ class Plugin_Name_Admin {
 
 			// Update all the relevant post meta
 			
-			// print_r($update);
-			// die();
-
 			// Update the title
 			wp_update_post( [
 				'ID' => $update['post'],
@@ -246,9 +243,50 @@ class Plugin_Name_Admin {
 			] );
 
 			// Update the author
-			// Organizer is the author
-			// Organizer needs an ID
+			if (isset($update['author']) && !empty($update['author'])) {
 
+				$author_name = $update['author'][0];
+
+				// split string, take everything after ,\s and place at the start followed by space
+				$keywords = preg_split("/,\s+/", $author_name);
+				$author_name = implode(' ', array_reverse($keywords));
+
+				$args = [
+					'post_type'			=> 'tribe_organizer',
+					'post_status' 		=> 'publish',
+					'posts_per_page' 	=> 1,
+					'order'    			=> 'ASC',
+					'fields'			=> 'ids',
+					'title' 			=> $author_name,
+				];              
+
+				$posts = get_posts( $args );
+
+				// If we dont, we need to create a new organizer in the post table
+				if (empty($posts)) {
+
+					$new_author_args = [
+						'post_title' 	=> $author_name,
+						'post_status' 	=> 'publish',
+						'post_type' 	=> 'tribe_organizer',
+					];
+
+					$new_author = wp_insert_post( $new_author_args );
+
+					// Let WP error handling take over
+					if (is_wp_error( $new_author)) {
+						return $new_author;
+					}
+
+					$posts[0] = $new_author;
+				}
+
+				if (!empty($posts[0])) {
+					// we can just update this posts's author with the new organizer
+					update_post_meta($update['post'], '_EventOrganizerID', $posts[0]);
+				}
+			}
+			
 			// Save the product image
 			// $this->attach_post_image();
 
