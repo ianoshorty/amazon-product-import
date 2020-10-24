@@ -130,9 +130,6 @@ class Amazon_Product_Import {
 
 		$plugin_admin = new Amazon_Product_Import_Admin( $this->get_plugin_name(), $this->get_version() );
 
-		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
-		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
-
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'register_import_settings_page' );
 		$this->loader->add_action( 'admin_post_amazon_product_import_triggered', $plugin_admin, 'import_products' );
 	
