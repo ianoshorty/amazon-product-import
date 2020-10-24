@@ -15,7 +15,7 @@ require_once(__DIR__ .'../../vendor/autoload.php');
 /**
  * The admin-specific functionality of the plugin
  *
- * @link       http://example.com
+ * @link       https://github.com/ianoshorty/amazon-product-import
  * @since      1.0.0
  *
  * @package    Amazon_Product_Import
