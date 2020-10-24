@@ -19,7 +19,6 @@
  *
  * @package    Amazon_Product_Import
  * @subpackage Amazon_Product_Import/includes
- * @author     Your Name <email@example.com>
  */
 class Amazon_Product_Import_Loader {
 

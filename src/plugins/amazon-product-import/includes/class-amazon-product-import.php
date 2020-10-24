@@ -27,7 +27,7 @@ require_once(__DIR__ .'/../vendor/autoload.php');
  * @since      1.0.0
  * @package    Amazon_Product_Import
  * @subpackage Amazon_Product_Import/includes
- * @author     Your Name <email@example.com>
+ * @author     Ian Outterside
  */
 class Amazon_Product_Import {
 
@@ -69,8 +69,8 @@ class Amazon_Product_Import {
 	 * @since    1.0.0
 	 */
 	public function __construct() {
-		if ( defined( 'PLUGIN_NAME_VERSION' ) ) {
-			$this->version = PLUGIN_NAME_VERSION;
+		if ( defined( 'AMAZON_PRODUCT_IMPORT_VERSION' ) ) {
+			$this->version = AMAZON_PRODUCT_IMPORT_VERSION;
 		} else {
 			$this->version = '1.0.0';
 		}
@@ -81,6 +81,11 @@ class Amazon_Product_Import {
 		$this->define_admin_hooks();
 	}
 
+	/**
+	 * Read the .env file to import Amazon Product SDK credentials
+	 *
+	 * @since    1.0.0
+	 */
 	public function load_credentials() {
 		$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
 		$dotenv->load();
@@ -92,9 +97,7 @@ class Amazon_Product_Import {
 	 * Include the following files that make up the plugin:
 	 *
 	 * - Amazon_Product_Import_Loader. Orchestrates the hooks of the plugin.
-	 * - Amazon_Product_Import_i18n. Defines internationalization functionality.
 	 * - Amazon_Product_Import_Admin. Defines all hooks for the admin area.
-	 * - Amazon_Product_Import_Public. Defines all hooks for the public side of the site.
 	 *
 	 * Create an instance of the loader which will be used to register the hooks
 	 * with WordPress.

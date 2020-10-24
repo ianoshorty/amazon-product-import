@@ -13,16 +13,15 @@
  * @package           Amazon_Product_Import
  *
  * @wordpress-plugin
- * Plugin Name:       WordPress Plugin Boilerplate
- * Plugin URI:        https://github.com/ianoshorty/amazon-product-import/amazon-product-import-uri/
- * Description:       This is a short description of what the plugin does. It's displayed in the WordPress admin area.
+ * Plugin Name:       Amazon Product Import
+ * Plugin URI:        https://github.com/ianoshorty/amazon-product-import/
+ * Description:       This plugin imports products from the Amazon Product SDK into The Events Calendar "Event" Post type which have an Amazon Product Identifier (or ISBN) attached.
  * Version:           1.0.0
- * Author:            Your Name or Your Company
+ * Author:            Ian Outterside
  * Author URI:        https://github.com/ianoshorty/amazon-product-import/
- * License:           GPL-2.0+
- * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
+ * License:           MIT
+ * License URI:       https://opensource.org/licenses/MIT
  * Text Domain:       amazon-product-import
- * Domain Path:       /languages
  */
 
 // If this file is called directly, abort.
@@ -35,7 +34,7 @@ if ( ! defined( 'WPINC' ) ) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define( 'PLUGIN_NAME_VERSION', '1.0.0' );
+define( 'AMAZON_PRODUCT_IMPORT_VERSION', '1.0.0' );
 
 /**
  * The core plugin class that is used to define internationalization,
