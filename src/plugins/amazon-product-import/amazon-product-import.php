@@ -10,7 +10,7 @@
  *
  * @link              http://example.com
  * @since             1.0.0
- * @package           Plugin_Name
+ * @package           Amazon_Product_Import
  *
  * @wordpress-plugin
  * Plugin Name:       WordPress Plugin Boilerplate
@@ -54,7 +54,7 @@ require plugin_dir_path( __FILE__ ) . 'includes/class-amazon-product-import.php'
  */
 function run_plugin_name() {
 
-	$plugin = new Plugin_Name();
+	$plugin = new Amazon_Product_Import();
 	$plugin->run();
 
 }

@@ -11,8 +11,8 @@ require_once(__DIR__ .'/../vendor/autoload.php');
  * @link       http://example.com
  * @since      1.0.0
  *
- * @package    Plugin_Name
- * @subpackage Plugin_Name/includes
+ * @package    Amazon_Product_Import
+ * @subpackage Amazon_Product_Import/includes
  */
 
 /**
@@ -25,11 +25,11 @@ require_once(__DIR__ .'/../vendor/autoload.php');
  * version of the plugin.
  *
  * @since      1.0.0
- * @package    Plugin_Name
- * @subpackage Plugin_Name/includes
+ * @package    Amazon_Product_Import
+ * @subpackage Amazon_Product_Import/includes
  * @author     Your Name <email@example.com>
  */
-class Plugin_Name {
+class Amazon_Product_Import {
 
 	/**
 	 * The loader that's responsible for maintaining and registering all hooks that power
@@ -37,7 +37,7 @@ class Plugin_Name {
 	 *
 	 * @since    1.0.0
 	 * @access   protected
-	 * @var      Plugin_Name_Loader    $loader    Maintains and registers all hooks for the plugin.
+	 * @var      Amazon_Product_Import_Loader    $loader    Maintains and registers all hooks for the plugin.
 	 */
 	protected $loader;
 
@@ -91,10 +91,10 @@ class Plugin_Name {
 	 *
 	 * Include the following files that make up the plugin:
 	 *
-	 * - Plugin_Name_Loader. Orchestrates the hooks of the plugin.
-	 * - Plugin_Name_i18n. Defines internationalization functionality.
-	 * - Plugin_Name_Admin. Defines all hooks for the admin area.
-	 * - Plugin_Name_Public. Defines all hooks for the public side of the site.
+	 * - Amazon_Product_Import_Loader. Orchestrates the hooks of the plugin.
+	 * - Amazon_Product_Import_i18n. Defines internationalization functionality.
+	 * - Amazon_Product_Import_Admin. Defines all hooks for the admin area.
+	 * - Amazon_Product_Import_Public. Defines all hooks for the public side of the site.
 	 *
 	 * Create an instance of the loader which will be used to register the hooks
 	 * with WordPress.
@@ -115,7 +115,7 @@ class Plugin_Name {
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-amazon-product-import-admin.php';
 
-		$this->loader = new Plugin_Name_Loader();
+		$this->loader = new Amazon_Product_Import_Loader();
 
 	}
 
@@ -128,7 +128,7 @@ class Plugin_Name {
 	 */
 	private function define_admin_hooks() {
 
-		$plugin_admin = new Plugin_Name_Admin( $this->get_plugin_name(), $this->get_version() );
+		$plugin_admin = new Amazon_Product_Import_Admin( $this->get_plugin_name(), $this->get_version() );
 
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
@@ -164,7 +164,7 @@ class Plugin_Name {
 	 * The reference to the class that orchestrates the hooks with the plugin.
 	 *
 	 * @since     1.0.0
-	 * @return    Plugin_Name_Loader    Orchestrates the hooks of the plugin.
+	 * @return    Amazon_Product_Import_Loader    Orchestrates the hooks of the plugin.
 	 */
 	public function get_loader() {
 		return $this->loader;

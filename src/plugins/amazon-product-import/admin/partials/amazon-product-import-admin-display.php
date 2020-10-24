@@ -1,15 +1,16 @@
 <?php
 
 /**
- * Provide a admin area view for the plugin
+ * Provide an admin area view for the plugin to allow users to press a button to import data from
+ * the amazon product SDK by their amazon product identifier.
  *
  * This file is used to markup the admin-facing aspects of the plugin.
  *
  * @link       http://example.com
  * @since      1.0.0
  *
- * @package    Plugin_Name
- * @subpackage Plugin_Name/admin/partials
+ * @package    Amazon_Product_Import
+ * @subpackage Amazon_Product_Import/admin/partials
  */
 ?>
 
