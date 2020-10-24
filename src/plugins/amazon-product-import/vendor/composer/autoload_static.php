@@ -252,14 +252,15 @@ class ComposerStaticInitd5146ae522d26e7d63537b6ba8158185
         ),
         'Amazon\\ProductAdvertisingAPI\\v1\\' => 
         array (
-            0 => __DIR__ . '/../..' . '/admin/src',
-            1 => __DIR__ . '/../..' . '/test',
+            0 => __DIR__ . '/../..' . '/admin/amazon-sdk-src',
         ),
     );
 
     public static $classMap = array (
         'ArithmeticError' => __DIR__ . '/..' . '/symfony/polyfill-php70/Resources/stubs/ArithmeticError.php',
         'AssertionError' => __DIR__ . '/..' . '/symfony/polyfill-php70/Resources/stubs/AssertionError.php',
+        'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
+        'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'DivisionByZeroError' => __DIR__ . '/..' . '/symfony/polyfill-php70/Resources/stubs/DivisionByZeroError.php',
         'Error' => __DIR__ . '/..' . '/symfony/polyfill-php70/Resources/stubs/Error.php',
         'File_Iterator' => __DIR__ . '/..' . '/phpunit/php-file-iterator/src/Iterator.php',

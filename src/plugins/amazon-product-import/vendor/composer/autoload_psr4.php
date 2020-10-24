@@ -45,5 +45,5 @@ return array(
     'Doctrine\\Common\\Annotations\\' => array($vendorDir . '/doctrine/annotations/lib/Doctrine/Common/Annotations'),
     'Composer\\XdebugHandler\\' => array($vendorDir . '/composer/xdebug-handler/src'),
     'Composer\\Semver\\' => array($vendorDir . '/composer/semver/src'),
-    'Amazon\\ProductAdvertisingAPI\\v1\\' => array($baseDir . '/admin/src', $baseDir . '/test'),
+    'Amazon\\ProductAdvertisingAPI\\v1\\' => array($baseDir . '/admin/amazon-sdk-src'),
 );
