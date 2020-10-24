@@ -31,8 +31,15 @@ To install the plugin:
    - AWS_TRACKING_ID
  - Activate the plugin in the WordPress Admin
 
-# Options / Notes
+# Featured Images (Optional)
 
+Optionally, you can use the provided `featured-image.php` to also use product images from Amazon as the featured image for The Events Calendar Events posts (tribe_events). To do this:
 
+ - Copy `featured-image.php`
+ - Place it within your activated WordPress theme at 
+    `[your-theme]/tribe/events/v2/list/event/featured-image.php`
+ - Note: make sure to add the intermediate folders named as above so that WordPress template heirarchy correctly locates the template.
+ - e.g. To use this file with the twentytwenty default WordPress theme, place `feature-image.php` at
+ `wordpress-install-directory/wp-content/themes/twentytwenty/tribe/events/v2/list/event/featured-image.php`
 
 Happy coding!
