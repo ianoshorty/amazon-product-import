@@ -3,7 +3,7 @@ A WordPress Plugin to import products from the Amazon Product SDK into The Event
 
 # Requirements
 
-This plugin requires The Events Calendar plugin (see https://theeventscalendar.com/products/wordpress-events-calendar/).
+This plugin requires The Events Calendar plugin (see https://theeventscalendar.com/products/wordpress-events-calendar/) to be installed in your WordPress application / site.
 
 # Setup
 
