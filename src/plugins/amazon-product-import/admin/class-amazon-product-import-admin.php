@@ -84,7 +84,7 @@ class Plugin_Name_Admin {
 		 * class.
 		 */
 
-		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/plugin-name-admin.css', array(), $this->version, 'all' );
+		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/amazon-product-import-admin.css', array(), $this->version, 'all' );
 	}
 
 	/**
@@ -106,7 +106,7 @@ class Plugin_Name_Admin {
 		 * class.
 		 */
 
-		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/plugin-name-admin.js', array( 'jquery' ), $this->version, false );
+		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/amazon-product-import-admin.js', array( 'jquery' ), $this->version, false );
 
 	}
 
@@ -115,7 +115,7 @@ class Plugin_Name_Admin {
 			__( 'Amazon Product Import', 'textdomain' ),
 			'Amazon Product Import',
 			'manage_options',
-			__DIR__ . '/partials/plugin-name-admin-display.php',
+			__DIR__ . '/partials/amazon-product-import-admin-display.php',
 			'',
 			'dashicons-download',
 			6
@@ -176,11 +176,11 @@ class Plugin_Name_Admin {
 	}
 
 	public function amazon_identifier_meta_box() {
-		require __DIR__ . '/partials/plugin-name-amazon-identifier-meta-box.php';
+		require __DIR__ . '/partials/amazon-product-import-amazon-identifier-meta-box.php';
 	}
 
 	public function amazon_product_image_url_meta_box() {
-		require __DIR__ . '/partials/plugin-name-amazon-product-image-url-meta-box.php';
+		require __DIR__ . '/partials/amazon-product-import-amazon-product-image-url-meta-box.php';
 	}
 
 	public function import_products() {
@@ -207,7 +207,7 @@ class Plugin_Name_Admin {
 			}
 		}
 		
-		wp_redirect( admin_url( 'admin.php?page=amazon-product-import%2Fadmin%2Fpartials%2Fplugin-name-admin-display.php&success=true' ) );
+		wp_redirect( admin_url( 'admin.php?page=amazon-product-import%2Fadmin%2Fpartials%2Famazon-product-import-admin-display.php&success=true' ) );
         exit;
 	}
 
