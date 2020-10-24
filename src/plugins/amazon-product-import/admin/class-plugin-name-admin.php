@@ -207,7 +207,7 @@ class Plugin_Name_Admin {
 			}
 		}
 		
-		wp_redirect( admin_url( 'admin.php?page=asianbooklistimport%2Fadmin%2Fpartials%2Fplugin-name-admin-display.php&success=true' ) );
+		wp_redirect( admin_url( 'admin.php?page=amazon-product-import%2Fadmin%2Fpartials%2Fplugin-name-admin-display.php&success=true' ) );
         exit;
 	}
 
