@@ -26,11 +26,12 @@ require_once(__DIR__ .'../../vendor/autoload.php');
  * The admin-specific functionality of the plugin.
  *
  * Defines the plugin name, version, and two examples hooks for how to
- * enqueue the admin-specific stylesheet and JavaScript.
+ * add meta boxes and handle request to fetch from the Product SDK and
+ * update events.
  *
  * @package    Amazon_Product_Import
  * @subpackage Amazon_Product_Import/admin
- * @author     Your Name <email@example.com>
+ * @author     Ian Outterside
  */
 class Amazon_Product_Import_Admin {
 
@@ -66,50 +67,10 @@ class Amazon_Product_Import_Admin {
 	}
 
 	/**
-	 * Register the stylesheets for the admin area.
+	 * Register the "Amazon Product Import" menu item into the admin navigation menu
 	 *
 	 * @since    1.0.0
 	 */
-	public function enqueue_styles() {
-
-		/**
-		 * This function is provided for demonstration purposes only.
-		 *
-		 * An instance of this class should be passed to the run() function
-		 * defined in Amazon_Product_Import_Loader as all of the hooks are defined
-		 * in that particular class.
-		 *
-		 * The Amazon_Product_Import_Loader will then create the relationship
-		 * between the defined hooks and the functions defined in this
-		 * class.
-		 */
-
-		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/amazon-product-import-admin.css', array(), $this->version, 'all' );
-	}
-
-	/**
-	 * Register the JavaScript for the admin area.
-	 *
-	 * @since    1.0.0
-	 */
-	public function enqueue_scripts() {
-
-		/**
-		 * This function is provided for demonstration purposes only.
-		 *
-		 * An instance of this class should be passed to the run() function
-		 * defined in Amazon_Product_Import_Loader as all of the hooks are defined
-		 * in that particular class.
-		 *
-		 * The Amazon_Product_Import_Loader will then create the relationship
-		 * between the defined hooks and the functions defined in this
-		 * class.
-		 */
-
-		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/amazon-product-import-admin.js', array( 'jquery' ), $this->version, false );
-
-	}
-
 	public function register_import_settings_page() {
 		add_menu_page(
 			__( 'Amazon Product Import', 'textdomain' ),
@@ -122,6 +83,14 @@ class Amazon_Product_Import_Admin {
 		);
 	}
 
+	/**
+	 * Add meta boxes to The Events Calendar pages for events (tribe_events post type)
+	 * to allow admins to enter an Amazon Product Identifier (or ISBN) and save it 
+	 * with the event. Also adds a meta box to display the image URL for this 
+	 * product from Amazon.
+	 *
+	 * @since    1.0.0
+	 */
 	public function amazon_identifier_add_meta_box() {
 		add_meta_box(
 			'amazon-identifier-post-class',      						// Unique ID
@@ -142,7 +111,14 @@ class Amazon_Product_Import_Admin {
 		);
 	}
 
-	public function amazon_identifier_save_post_meta( $post_id, $post ) {
+	/**
+	 * Method to handle saving of an Amazon Product Identifier (or ISBN) alongside a "trive-event"
+	 * (The Events Calendar - Event Post Type).
+	 *
+	 * @since    1.0.0
+	 * @param      int    		$post_id       	The ID of the post in the database
+	 */
+	public function amazon_identifier_save_post_meta( $post_id ) {
 
 		/* Verify the nonce before proceeding. */
 		if ( !isset( $_POST['amazon_identifier_post_nonce'] ) ||
@@ -175,16 +151,32 @@ class Amazon_Product_Import_Admin {
 		}
 	}
 
+	/**
+	 * Load the PHP template for the product identifier (ISBN) meta box
+	 *
+	 * @since    1.0.0
+	 */
 	public function amazon_identifier_meta_box() {
 		require __DIR__ . '/partials/amazon-product-import-amazon-identifier-meta-box.php';
 	}
 
+	/**
+	 * Load the PHP template for the product image URL meta box
+	 *
+	 * @since    1.0.0
+	 */
 	public function amazon_product_image_url_meta_box() {
 		require __DIR__ . '/partials/amazon-product-import-amazon-product-image-url-meta-box.php';
 	}
 
+	/**
+	 * Method to import products (called when pressing the "Import Products" button in the admin)
+	 *
+	 * @since    1.0.0
+	 */
 	public function import_products() {
 
+		// Make sure this was triggered by a real person
 		if ( ! check_admin_referer( 'amazon_product_import') ) {
 			wp_die( 
 				__( 'Invalid nonce specified', $this->plugin_name ), 
@@ -197,20 +189,31 @@ class Amazon_Product_Import_Admin {
 			exit;
 		}
 
+		// Get a list of all the product IDs that we want to update
 		$products = $this->collect_product_identifiers();
 
+		// If we have some IDs
 		if ( !empty($products) ) {
+
+			// Lets fetch the updates from Amazon via the SDK
 			$updates = $this->fetch_items($products);
 
 			if ( !empty($updates) ) {
+				// Now lets update our DB with the new information
 				$this->update_items($updates);
 			}
 		}
 		
+		// Finally lets throw up a confirmation box to the user and redirect
 		wp_redirect( admin_url( 'admin.php?page=amazon-product-import%2Fadmin%2Fpartials%2Famazon-product-import-admin-display.php&success=true' ) );
         exit;
 	}
 
+	/**
+	 * Method to pull all the product identifiers that need updating from the database
+	 *
+	 * @since    1.0.0
+	 */
 	protected function collect_product_identifiers() {
 
 		// Get all the products stored as Events in tribe
@@ -244,6 +247,23 @@ class Amazon_Product_Import_Admin {
 		return $product_ids;
 	}
 
+	/**
+	 * Method to update tribe_events records with details about a product from its amazon
+	 * product identifier.
+	 * 
+	 * An update looks like:
+	 * 
+	 * [product_id] = [
+	 * 	 post,  //post id (int)
+	 *   title, //post title (string)
+	 *   author[], // array of post authors,
+	 *   image, // post image URL (string)
+	 *   release, // post release date (string)
+	 * ]
+	 *
+	 * @since    1.0.0
+	 * @param    update[]   		$updates       	The ID of the post in the database
+	 */
 	public function update_items($updates = []) {
 		foreach ($updates as $update) {
 
@@ -314,6 +334,13 @@ class Amazon_Product_Import_Admin {
 		}
 	}
 
+	/**
+	 * Method to fetch items from the Amazon Product SDK based on their Amazon Product Identifier
+	 * or ISBN.
+	 *
+	 * @since    1.0.0
+	 * @param    product[]    		$products       	Array of product IDs mapped to WordPress post ids.
+	 */
 	public function fetch_items($products = []) {
 		$config = new Configuration();
 		$access_key_id = $_ENV['AWS_ACCESS_KEY_ID'];
@@ -407,21 +434,18 @@ class Amazon_Product_Import_Admin {
 								continue;
 							}
 
-							//echo "ISBN: ", $item->getASIN(), PHP_EOL;
 							$asin = $item->getASIN();
 							$updates[$asin]['ASIN'] = $asin;
 							$updates[$asin]['post'] = $products[$asin];
 
 							if ($item->getDetailPageURL() !== null) {
-								// echo "DetailPageURL: ", $item->getDetailPageURL(), PHP_EOL;
 								$updates[$asin]['detail'] = $item->getDetailPageURL();
 							}
 
 							if ($item->getItemInfo() !== null
 								&& $item->getItemInfo()->getTitle() !== null
 								&& $item->getItemInfo()->getTitle()->getDisplayValue() !== null) {
-								// echo "Title: ", $item->getItemInfo()->getTitle()->getDisplayValue(), PHP_EOL;
-
+								
 								$updates[$asin]['title'] = $item->getItemInfo()->getTitle()->getDisplayValue();
 							}
 
@@ -433,8 +457,6 @@ class Amazon_Product_Import_Admin {
 
 								foreach ($contributors as $contributor) {
 									if ($contributor->getRoleType() === 'author') {
-										//echo "Author: ", $contributor->getName(), PHP_EOL;
-
 										$updates[$asin]['author'][] = $contributor->getName();
 									}
 								}
@@ -443,17 +465,13 @@ class Amazon_Product_Import_Admin {
 							if ($item->getImages() !== null && 
 								$item->getImages()->getPrimary() !== null &&
 								$item->getImages()->getPrimary()->getMedium() !== null) {
-									// echo "Image URL: " . $item->getImages()->getPrimary()->getMedium()->getURL() . PHP_EOL;
-
-								$updates[$asin]['image'] = $item->getImages()->getPrimary()->getMedium()->getURL();	
+									$updates[$asin]['image'] = $item->getImages()->getPrimary()->getMedium()->getURL();	
 							}
 
 							if ($item->getItemInfo()->getProductInfo() !== null && 
 								$item->getItemInfo()->getProductInfo()->getReleaseDate() !== null &&
 								$item->getItemInfo()->getProductInfo()->getReleaseDate()->getLabel() !== null) {
-									// echo "Release Date: " . $item->getItemInfo()->getProductInfo()->getReleaseDate()->getDisplayValue() . PHP_EOL;
-									
-								$updates[$asin]['release'] = $item->getItemInfo()->getProductInfo()->getReleaseDate()->getDisplayValue();	
+									$updates[$asin]['release'] = $item->getItemInfo()->getProductInfo()->getReleaseDate()->getDisplayValue();	
 							}
 						}
 					}
