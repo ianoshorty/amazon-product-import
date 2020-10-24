@@ -1,7 +1,8 @@
 <?php
 
 /**
- * Provide 
+ * Provide an meta box on Events Calendar Events to enter the Amazon Product Identifier
+ * (or ISBN number) that the event is representing as a product.
  *
  * This file is used to markup the admin-facing aspects of the plugin.
  *

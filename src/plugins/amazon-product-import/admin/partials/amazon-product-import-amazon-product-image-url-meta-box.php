@@ -1,7 +1,8 @@
 <?php
 
 /**
- * Provide 
+ * Provide an meta box on Events Calendar Events to show the Amazon Product Image URL for
+ * this product - which can be used in the body source (or with a featured image).
  *
  * This file is used to markup the admin-facing aspects of the plugin.
  *

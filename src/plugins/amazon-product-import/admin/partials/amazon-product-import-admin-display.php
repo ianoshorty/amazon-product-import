@@ -18,7 +18,7 @@
 
 <p>This plugin allows you to automatically update products imported from the Amazon Product Listing APIs.</p>
 
-<p>The plugin only updates content that has an ISBN stored with it.</p>
+<p>The plugin only updates content that has an ISBN (or Amazon Product Identifier) stored with it.</p>
 
 <p><strong>Please note: this plugin may take a long time to execute depending on how many products need to be imported.</strong></p>
 
