@@ -7,7 +7,7 @@ This plugin requires The Events Calendar plugin (see https://theeventscalendar.c
 
 # Setup
 
-To get setup for development:
+To get setup for development if you want to modify this plugin:
 
  - Clone the repo
  - Make sure you have docker installed (development requirement only)
