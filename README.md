@@ -31,6 +31,23 @@ To install the plugin:
    - AWS_TRACKING_ID
  - Activate the plugin in the WordPress Admin
 
+To use the plugin:
+
+ - Create an Events Calender Event (aka tribe_events post type)
+ - Set the Amazon Product Identifier on the right hand side of a product you wish to import
+ - Set a release date thats in the future (this will be automatically updated to the correct date after the first import)
+ - Press the "Import Products" button in the "Amazon Product Import" menu.
+ - Profit!
+
+Fields currently imported include:
+
+ - Product Title
+ - Product Release Date
+ - Product Image URL (medium size)
+ - Product Author
+
+For more information, read the README at `src/plugins/amazon-product-import/README.txt`.
+
 # Featured Images (Optional)
 
 Optionally, you can use the provided `featured-image.php` to also use product images from Amazon as the featured image for The Events Calendar Events posts (tribe_events). To do this:
