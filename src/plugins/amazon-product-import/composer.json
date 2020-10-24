@@ -1,23 +1,25 @@
 {
-    "name": "amzn/paapi5-php-sdk",
+    "name": "ianoshorty/amazon-product-import",
     "version": "1.0.0",
-    "description": "ProductAdvertisingAPI 5.0 PHP SDK",
+    "description": "A WordPress Plugin to import products from the Amazon Product SDK into The Events Calendar Plugin.",
     "keywords": [
         "amazon",
         "pa-api",
         "paapi",
         "paapi5.0",
-        "paapi5",
-        "paapi5-php-sdk",
-        "getitems",
-        "searchitems",
-        "getvariations",
-        "getbrowsenodes",
-        "ProductAdvertisingAPI"
+        "the-events-calendar",
+        "product-import",
+        "product",
+        "import",
+        "isbn"
     ],
-    "homepage": "https://webservices.amazon.com/paapi5/documentation/index.html",
-    "license": "Apache-2.0",
+    "homepage": "https://github.com/ianoshorty/amazon-product-import",
+    "license": "MIT",
     "authors": [
+        {
+            "name": "Ian Outterside",
+            "homepage": "https://github.com/ianoshorty/"
+        },
         {
             "name": "Product Advertising API Team",
             "homepage": "https://webservices.amazon.com/paapi5/documentation/index.html"
@@ -37,19 +39,13 @@
         "friendsofphp/php-cs-fixer": "~2.12"
     },
     "scripts": {
-        "test": "vendor/bin/phpunit",
         "phpcs": "vendor/bin/phpcs --standard=phpcs.xml -n SampleGetItemsApi.php SampleSearchItemsApi.php SampleGetVariationsApi.php SampleGetBrowseNodesApi.php src/com/amazon/paapi5/v1/auth/SignHelper.php",
         "phpcbf": "vendor/bin/phpcbf --standard=phpcs.xml -n SampleGetItemsApi.php SampleSearchItemsApi.php SampleGetVariationsApi.php SampleGetBrowseNodesApi.php src/com/amazon/paapi5/v1/auth/SignHelper.php",
         "php-cs-fixer": "vendor/friendsofphp/php-cs-fixer/php-cs-fixer fix --allow-risky=yes --using-cache=no --config=.php_cs SampleGetItemsApi.php SampleSearchItemsApi.php SampleGetVariationsApi.php SampleGetBrowseNodesApi.php src/com/amazon/paapi5/v1/auth/SignHelper.php"
     },
     "autoload": {
         "psr-4": {
-            "Amazon\\ProductAdvertisingAPI\\v1\\": "admin/src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Amazon\\ProductAdvertisingAPI\\v1\\": "test/"
+            "Amazon\\ProductAdvertisingAPI\\v1\\": "admin/amazon-sdk-src/"
         }
     }
 }
