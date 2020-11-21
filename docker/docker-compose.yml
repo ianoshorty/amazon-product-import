@@ -39,6 +39,7 @@ services:
     volumes:
       - wordpress:/var/www/html 
       - ./nginx/app.conf:/etc/nginx/nginx.conf
+      - ../src/plugins:/var/www/html/wp-content/plugins
 
   db:
     image: mysql:5.7.22
