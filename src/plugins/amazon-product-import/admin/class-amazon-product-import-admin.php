@@ -268,12 +268,6 @@ class Amazon_Product_Import_Admin {
 		foreach ($updates as $update) {
 
 			// Update all the relevant post meta
-			
-			// Update the title
-			wp_update_post( [
-				'ID' => $update['post'],
-				'post_title' => $update['title'],
-			] );
 
 			// Update the author
 			if (isset($update['author']) && !empty($update['author'])) {
@@ -313,6 +307,27 @@ class Amazon_Product_Import_Admin {
 
 					$posts[0] = $new_author;
 				}
+
+				// Get the post content so that we can replace values for gutenburg editor
+				$content = get_post_field('post_content', $update['post']);
+
+				// Searching for 
+				// <!-- wp:tribe/event-organizer /-->
+				// Replacing with
+				// <!-- wp:tribe/event-organizer {"organizer":711} /-->
+
+				$updated_post_content = str_replace( 
+					'<!-- wp:tribe/event-organizer /-->', 
+					'<!-- wp:tribe/event-organizer {"organizer": ' . $posts[0] . '} /-->',
+					$content
+				);
+
+				// Update the title and content
+				wp_update_post( [
+					'ID' => $update['post'],
+					'post_title' => $update['title'],
+					'post_content' => $updated_post_content,
+				] );
 
 				if (!empty($posts[0])) {
 					// we can just update this posts's author with the new organizer
