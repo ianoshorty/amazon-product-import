@@ -16,13 +16,9 @@
  * @see tribe_get_event() For the format of the event object.
  */
 
-if ( ! $event->thumbnail->exists ) {
-	return;
-}
-
 $image_url = get_post_meta($event->ID, 'amazon_product_image_url');
 
-if (empty($image_url)) : ?>
+if (empty($image_url) && $event->thumbnail->exists) : ?>
 
 <div class="tribe-events-calendar-list__event-featured-image-wrapper tribe-common-g-col">
 	<a
@@ -47,7 +43,7 @@ if (empty($image_url)) : ?>
 	</a>
 </div>
 
-<?php else : ?>
+<?php elseif (!empty($image_url)) : ?>
 
 <div class="tribe-events-calendar-list__event-featured-image-wrapper tribe-common-g-col">
     <img
