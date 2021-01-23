@@ -198,15 +198,40 @@ class Amazon_Product_Import_Admin {
 			// Lets fetch the updates from Amazon via the SDK
 			$updates = $this->fetch_items($products);
 
-			if ( !empty($updates) ) {
+			// Remove the error key in the array
+			$errors = $updates['error'];
+			unset($updates['error']);
+
+			if ( !empty($updates) && count($errors) === 0 ) {
 				// Now lets update our DB with the new information
 				$this->update_items($updates);
+
+				// Finally lets throw up a confirmation box to the user and redirect
+				wp_redirect( admin_url( 'admin.php?page=amazon-product-import%2Fadmin%2Fpartials%2Famazon-product-import-admin-display.php&success=true' ) );
+        exit;
+			}
+			else if (count($errors) > 0) {
+				// Store the errors in a transient
+				set_transient( 'amazon-import-errors', $errors, MINUTE_IN_SECONDS );
+				// Finally lets throw up an error box to the user and redirect
+				wp_redirect( admin_url( 'admin.php?page=amazon-product-import%2Fadmin%2Fpartials%2Famazon-product-import-admin-display.php&success=false' ) );
+        exit;
+			}
+			else {
+				// No updates
+				// Finally lets throw up a confirmation box to the user and redirect
+				wp_redirect( admin_url( 'admin.php?page=amazon-product-import%2Fadmin%2Fpartials%2Famazon-product-import-admin-display.php&success=true' ) );
+        exit;
 			}
 		}
-		
-		// Finally lets throw up a confirmation box to the user and redirect
-		wp_redirect( admin_url( 'admin.php?page=amazon-product-import%2Fadmin%2Fpartials%2Famazon-product-import-admin-display.php&success=true' ) );
-        exit;
+		else {
+			// No products to import
+			// Finally lets throw up a confirmation box to the user and redirect
+			wp_redirect( admin_url( 'admin.php?page=amazon-product-import%2Fadmin%2Fpartials%2Famazon-product-import-admin-display.php&success=true' ) );
+			exit;
+		}
+
+	
 	}
 
 	/**
@@ -336,16 +361,21 @@ class Amazon_Product_Import_Admin {
 			}
 			
 			// Save the product image
-			update_post_meta($update['post'], 'amazon_product_image_url', $update['image']);
+			if (isset($update['image']) && !empty($update['image'])) {
+				update_post_meta($update['post'], 'amazon_product_image_url', $update['image']);
+			}
 
 			// Update the release date
-			$format = 'Y-m-d\TH:i:s\Z';
-			$release_date = DateTime::createFromFormat($format, $update['release']);
+			if (isset($update['release']) && !empty($update['release'])) {
+				$release_date = new DateTime($update['release']);
 
-			update_post_meta($update['post'], '_EventStartDate', $release_date->format('Y-m-d H:i:s'));
-			update_post_meta($update['post'], '_EventEndDate', $release_date->format('Y-m-d H:i:s'));
-			update_post_meta($update['post'], '_EventStartDateUTC', $release_date->format('Y-m-d H:i:s'));
-			update_post_meta($update['post'], '_EventEndDateUTC', $release_date->format('Y-m-d H:i:s'));
+				if (is_object($release_date)) {
+					update_post_meta($update['post'], '_EventStartDate', $release_date->format('Y-m-d H:i:s'));
+					update_post_meta($update['post'], '_EventEndDate', $release_date->format('Y-m-d H:i:s'));
+					update_post_meta($update['post'], '_EventStartDateUTC', $release_date->format('Y-m-d H:i:s'));
+					update_post_meta($update['post'], '_EventEndDateUTC', $release_date->format('Y-m-d H:i:s'));
+				}
+			}
 		}
 	}
 
@@ -412,7 +442,9 @@ class Amazon_Product_Import_Admin {
 		}, array_keys($products));
 
 		// Batch into groups of 10
-		$updates = [];
+		$updates = [
+			'error' => [],
+		];
 
 		$product_ids_batched = array_chunk( $product_ids, 10 );
 		
@@ -428,9 +460,9 @@ class Amazon_Product_Import_Admin {
 			$invalidPropertyList = $searchItemsRequest->listInvalidProperties();
 			$length = count($invalidPropertyList);
 			if ($length > 0) {
-				echo "Error forming the request", PHP_EOL;
+				$updates['error'][] = "Error forming the request";
 				foreach ($invalidPropertyList as $invalidProperty) {
-					echo $invalidProperty, PHP_EOL;
+					$updates['error'][] = $invalidProperty;
 				}
 				return;
 			}
@@ -493,26 +525,26 @@ class Amazon_Product_Import_Admin {
 				}
 
 				if ($searchItemsResponse->getErrors() !== null) {
-					echo PHP_EOL, 'Printing Errors:', PHP_EOL, 'Printing first error object from list of errors', PHP_EOL;
-					echo 'Error code: ', $searchItemsResponse->getErrors()[0]->getCode(), PHP_EOL;
-					echo 'Error message: ', $searchItemsResponse->getErrors()[0]->getMessage(), PHP_EOL;
+					$updates['error'][] = 'Printing Errors:' . 'Printing first error object from list of errors';
+					$updates['error'][] = 'Error code: ' . $searchItemsResponse->getErrors()[0]->getCode();
+					$updates['error'][] = 'Error message: ' . $searchItemsResponse->getErrors()[0]->getMessage();
 				}
 
 			} catch (ApiException $exception) {
-				echo "Error calling PA-API 5.0!", PHP_EOL;
-				echo "HTTP Status Code: ", $exception->getCode(), PHP_EOL;
-				echo "Error Message: ", $exception->getMessage(), PHP_EOL;
+				$updates['error'][] = "Error calling PA-API 5.0!";
+				$updates['error'][] = "HTTP Status Code: " . $exception->getCode();
+				$updates['error'][] = "Error Message: " . $exception->getMessage();
 				if ($exception->getResponseObject() instanceof ProductAdvertisingAPIClientException) {
 					$errors = $exception->getResponseObject()->getErrors();
 					foreach ($errors as $error) {
-						echo "Error Type: ", $error->getCode(), PHP_EOL;
-						echo "Error Message: ", $error->getMessage(), PHP_EOL;
+						$updates['error'][] = "Error Type: " . $error->getCode();
+						$updates['error'][] = "Error Message: " . $error->getMessage();
 					}
 				} else {
-					echo "Error response body: ", $exception->getResponseBody(), PHP_EOL;
+					$updates['error'][] = "Error response body: " . $exception->getResponseBody();
 				}
 			} catch (Exception $exception) {
-				echo "Error Message: ", $exception->getMessage(), PHP_EOL;
+				$updates['error'][] = "Error Message: " . $exception->getMessage();
 			}
 		}
 
