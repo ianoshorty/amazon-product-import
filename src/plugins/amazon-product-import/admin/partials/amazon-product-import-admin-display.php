@@ -37,4 +37,18 @@
     <p><strong><i>Import successful!</i></strong></p>
 <?php endif ?>
 
+<?php if (isset($_GET['success']) && $_GET['success'] === 'false') : ?>
+    <p><strong><i>Import failed - errors below!</i></strong></p>
+    <?php
+    $errors = get_transient( 'amazon-import-errors' );
+    delete_transient( 'amazon-import-errors' );
+    if ($errors && count($errors) > 0 ): ?>
+        <ul>
+        <?php foreach ($errors as $error): ?>
+            <li><?php echo $error ?></li>
+        <?php endforeach; ?>
+        </ul>
+    <?php endif; ?>
+<?php endif ?>
+
 </form>
